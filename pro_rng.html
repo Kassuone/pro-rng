@@ -591,6 +591,29 @@
          * @param {number} decimals - 小数位数
          * @returns {number} 范围内的随机浮点数
          */
+        /**
+         * 生成 [0, n) 内的密码学安全随机索引（无偏）
+         * @param {number} n
+         * @returns {number}
+         */
+        function secureRandomIndex(n) {
+            if (!Number.isInteger(n) || n <= 0) throw new Error('n 必须为正整数');
+
+            const arr = new Uint32Array(1);
+            const range = n;
+            const maxUint = 0xFFFFFFFF;
+            const bucket = Math.floor((maxUint + 1) / range);
+            const limit = bucket * range;
+
+            let val;
+            do {
+                window.crypto.getRandomValues(arr);
+                val = arr[0] >>> 0;
+            } while (val >= limit);
+
+            return val % range;
+        }
+
         function secureRandomFloat(min, max, decimals = 2) {
             if (min >= max) throw new Error('最小值必须小于最大值');
 
@@ -901,8 +924,8 @@
                 }
                 generatedIntermediate.push(candidates);
 
-                // 从候选中随机选择一个作为最终结果
-                const pickIndex = secureRandomInt(0, candidates.length - 1);
+                // 从候选中随机选择一个作为最终结果（使用无偏的 secureRandomIndex）
+                const pickIndex = secureRandomIndex(candidates.length);
                 const pick = candidates[pickIndex];
 
                 if (unique) {
